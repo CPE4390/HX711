@@ -43,8 +43,7 @@ void main(void) {
     //Main loop
     while (1) {
         __delay_ms(200);
-        //while (!HX711Ready());
-        long data = ReadHX711(A_64);
+        long data = ReadHX711(B_32);
         lprintf(1, "%ld", data);
         LATDbits.LATD0 ^= 1;
     }
@@ -59,6 +58,7 @@ void InitHX711(void) {
 
 long ReadHX711(char nextConversion) {
     long result = 0;
+    while (PORTDbits.RD5 == 1); //Wait for ready
     //Read 24 bits
     for (char i = 0; i < 24; ++i) {
         CLK = 1;
@@ -74,6 +74,10 @@ long ReadHX711(char nextConversion) {
         __delay_us(1);
         CLK = 0;
         __delay_us(1);
+    }
+    if (result & 0x800000) {
+        //extend sign if negative
+        result |= 0xff000000;
     }
     return result;
 }
